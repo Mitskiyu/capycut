@@ -50,3 +50,24 @@ std::string Steam::LocateSteamPath()
 
 	return std::string(steamPath);
 }
+
+std::string Steam::LocateLibraryVDF(const std::string& steamPath)
+{
+	// construct libraryfolders.vdf path
+	std::filesystem::path vdfPath = std::filesystem::path(steamPath) / "steamapps" / "libraryfolders.vdf";
+	if (!std::filesystem::exists(vdfPath))
+	{
+		std::cerr << "ERROR: Could not find libraryfolders.vdf" << '\n';
+		std::cout << "Manually input the path to libraryfolders.vdf: " << '\n';
+		std::string manualPath;
+		std::getline(std::cin, manualPath);
+
+		vdfPath = std::filesystem::path(manualPath);
+		if (!std::filesystem::exists(vdfPath))
+		{
+			return std::string("");
+		}
+	}
+
+	return vdfPath.string();
+}
