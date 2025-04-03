@@ -1,6 +1,9 @@
-#include <iostream>
-#include <string>
 #include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <regex>
+#include <string>
+#include <vector>
 
 #include <windows.h>
 
@@ -70,4 +73,29 @@ std::string Steam::LocateLibraryVDF(const std::string& steamPath)
 	}
 
 	return vdfPath.string();
+}
+
+std::vector<std::string> Steam::LocateLibraryPaths(const std::string& vdfPath) {
+	std::vector<std::string> libraryPaths;
+	std::ifstream file(vdfPath);
+	if (!file.is_open())
+	{
+		std::cerr << "ERROR: Could not open: " << vdfPath << '\n';
+		return libraryPaths;
+	}
+
+	std::regex path(R"x("path"\s+"([^"]+)")x");
+	std::string line;
+	std::smatch match;
+
+	while (std::getline(file, line))
+	{
+		if (std::regex_search(line, match, path))
+		{
+			if (match.size() >= 2)
+				libraryPaths.push_back(match[1].str());
+		}
+	}
+
+	return libraryPaths;
 }
