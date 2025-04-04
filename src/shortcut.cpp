@@ -50,7 +50,7 @@ std::wstring Shortcut::CreateSubDir(const std::wstring& startMenuPath)
 	return fullPath;
 }
 
-void Shortcut::CreateShortcut(const Steam::AppData& data, const std::wstring& subDirPath)
+void Shortcut::CreateShortcut(const Steam::AppData& data, const std::wstring& subDirPath, const std::wstring& iconPath)
 {
 	// invalid filename characters
 	std::wregex invalid(LR"([\\/*?:"<>;|])");
@@ -78,6 +78,8 @@ void Shortcut::CreateShortcut(const Steam::AppData& data, const std::wstring& su
 	// write url file
 	ofs << L"[InternetShortcut]\n";
 	ofs << L"URL=steam://rungameid/" << data.appId << L'\n';
+	ofs << L"IconFile=" << iconPath << L'\n';
+	ofs << L"IconIndex=0\n";
 
 	ofs.close();
 }

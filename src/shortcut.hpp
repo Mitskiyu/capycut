@@ -14,7 +14,7 @@ public:
 
 	std::wstring getStartMenuPath() const { return startMenuPath; }
 	static std::wstring CreateSubDir(const std::wstring& startMenuPath);
-	static void CreateShortcut(const Steam::AppData& data, const std::wstring& output);
+	static void CreateShortcut(const Steam::AppData& data, const std::wstring& output, const std::wstring& iconPath);
 private:
 	std::wstring startMenuPath;
 	std::wstring subDirPath;
