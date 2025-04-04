@@ -6,6 +6,12 @@
 
 class Steam {
 public:
+	struct AppData {
+		int appId{};
+		std::string name;
+		std::string installDir;
+	};
+
 	Steam()
 		: steamPath(LocateSteamPath()),
 		vdfPath(LocateLibraryVDF(steamPath)),
@@ -16,22 +22,30 @@ public:
 			std::vector<std::string> appManifests = LocateAppManifestPaths(lib);
 			appManifestPaths.insert(appManifestPaths.end(), appManifests.begin(), appManifests.end());
 		}
+
+		for (const auto& app : appManifestPaths)
+		{
+			apps.push_back(ParseAppManifest(app));
+		}
 	}
 
 	std::string getSteamPath() const { return steamPath; }
 	std::string getLibraryVDF() const { return vdfPath; }
 	std::vector<std::string> getLibraryPaths() const { return libraryPaths; }
 	std::vector<std::string> getAppManifestPaths() const { return appManifestPaths; }
+	std::vector<AppData> getAppsData() const { return apps; }
 private:
 	std::string steamPath;
 	std::string vdfPath;
 	std::vector<std::string> libraryPaths;
 	std::vector<std::string> appManifestPaths;
+	std::vector<AppData> apps;
 
 	static std::string LocateSteamPath();
 	static std::string LocateLibraryVDF(const std::string& steamPath);
 	static std::vector<std::string> LocateLibraryPaths(const std::string& vdfPath);
 	static std::vector<std::string> LocateAppManifestPaths(const std::string& libraryPath);
+	static AppData ParseAppManifest(const std::string& appManifestPath);
 };
 
 #endif

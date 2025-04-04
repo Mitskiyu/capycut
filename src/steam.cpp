@@ -133,3 +133,32 @@ std::vector<std::string> Steam::LocateAppManifestPaths(const std::string& librar
 
 	return appManifestPaths;
 }
+
+Steam::AppData Steam::ParseAppManifest(const std::string& appManifestPath)
+{
+	AppData appData;
+	std::fstream file(appManifestPath);
+	if (!file.is_open())
+	{
+		std::cerr << "ERROR: Could not open: " << appManifestPath << '\n';
+		return appData;
+	}
+
+	std::regex appId(R"x("appid"\s+"(\d+)")x");
+	std::regex name(R"x("name"\s+"([^"]+)")x");
+	std::regex installDir(R"x("installdir"\s+"([^"]+)")x");
+	std::string line;
+	std::smatch match;
+
+	while (std::getline(file, line))
+	{
+		if (std::regex_search(line, match, appId) && match.size() >= 2)
+			appData.appId = std::stoi(match[1].str());
+		if (std::regex_search(line, match, name) && match.size() >= 2)
+			appData.name = match[1].str();
+		if (std::regex_search(line, match, installDir) && match.size() >= 2)
+			appData.installDir = match[1].str();
+	}
+
+	return appData;
+}
