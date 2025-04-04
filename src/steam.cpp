@@ -1,7 +1,9 @@
+#include <codecvt>
 #include <filesystem>
 #include <fstream>
 #include <iosfwd>
 #include <iostream>
+#include <locale>
 #include <regex>
 #include <string>
 #include <vector>
@@ -145,7 +147,10 @@ std::vector<std::wstring> Steam::LocateAppManifestPaths(const std::wstring& libr
 Steam::AppData Steam::ParseAppManifest(const std::wstring& appManifestPath)
 {
 	AppData appData;
+
+	// utf8 encoding
 	std::wifstream file(appManifestPath);
+	file.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
 	if (!file.is_open())
 	{
 		std::wcerr << L"ERROR: Could not open: " << appManifestPath << L'\n';

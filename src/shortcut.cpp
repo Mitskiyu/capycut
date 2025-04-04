@@ -1,11 +1,11 @@
+#include <codecvt>
 #include <filesystem>
 #include <fstream>
 #include <iosfwd>
 #include <iostream>
+#include <locale>
 #include <regex>
 #include <string>
-// #include <codecvt>
-// #include <locale>
 
 #include <combaseapi.h>
 #include <knownfolders.h>
@@ -65,7 +65,10 @@ void Shortcut::CreateShortcut(const Steam::AppData& data, const std::wstring& su
 	std::wstring filePath = subDirPath + L"\\" + name + L".url";
 
 	// std::string filePath = conv.to_bytes(wfilePath);
+
+	// utf8 encoding
 	std::wofstream ofs(filePath);
+	ofs.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
 	if (!ofs)
 	{
 		std::wcerr << L"ERROR: Could not create shortcut for file: " << filePath << L'\n';
