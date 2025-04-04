@@ -1,11 +1,11 @@
-#include <codecvt>
 #include <filesystem>
 #include <fstream>
 #include <iosfwd>
 #include <iostream>
-#include <locale>
 #include <regex>
 #include <string>
+// #include <codecvt>
+// #include <locale>
 
 #include <combaseapi.h>
 #include <knownfolders.h>
@@ -22,17 +22,17 @@ std::wstring Shortcut::LocateStartMenuPath()
 	HRESULT hr = SHGetKnownFolderPath(FOLDERID_Programs, 0, NULL, &path);
 	if (!SUCCEEDED(hr) || path == nullptr)
 	{
-		std::wcerr << L"ERROR: Could not get Start Menu path" << '\n';
-		std::string manualPath;
-		std::getline(std::cin, manualPath);
+		std::wcerr << L"ERROR: Could not get Start Menu path" << L'\n';
+		std::wstring manualPath;
+		std::getline(std::wcin, manualPath);
 
 		if (!std::filesystem::exists(manualPath))
 			return L"";
 
-		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
-		std::wstring wmanual = conv.from_bytes(manualPath);
+		// std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+		// std::wstring wmanual = conv.from_bytes(manualPath);
 
-		return wmanual;
+		return manualPath;
 	}
 
 	std::wstring startMenuPath(path);
@@ -53,28 +53,28 @@ std::wstring Shortcut::CreateSubDir(const std::wstring& startMenuPath)
 void Shortcut::CreateShortcut(const Steam::AppData& data, const std::wstring& subDirPath)
 {
 	// invalid filename characters
-	std::regex invalid(R"([\\/*?:"<>;|])");
+	std::wregex invalid(LR"([\\/*?:"<>;|])");
 
 	// sanitize the filename, replace with _
-	std::string name = std::regex_replace(data.name, invalid, "_");
+	std::wstring name = std::regex_replace(data.name, invalid, L"_");
 
 	// convert to wstring for filename
-	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
-	std::wstring wname = conv.from_bytes(name);
+	// std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+	// std::wstring wname = conv.from_bytes(name);
 
-	std::wstring wfilePath = subDirPath + L"\\" + wname + L".url";
+	std::wstring filePath = subDirPath + L"\\" + name + L".url";
 
-	std::string filePath = conv.to_bytes(wfilePath);
-	std::ofstream ofs(filePath);
+	// std::string filePath = conv.to_bytes(wfilePath);
+	std::wofstream ofs(filePath);
 	if (!ofs)
 	{
-		std::wcerr << L"ERROR: Could not create shortcut for file: " << wfilePath << '\n';
+		std::wcerr << L"ERROR: Could not create shortcut for file: " << filePath << L'\n';
 		return;
 	}
 
 	// write url file
-	ofs << "[InternetShortcut]\n";
-	ofs << "URL=steam://rungameid/" << data.appId << '\n';
+	ofs << L"[InternetShortcut]\n";
+	ofs << L"URL=steam://rungameid/" << data.appId << L'\n';
 
 	ofs.close();
 }

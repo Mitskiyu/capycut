@@ -8,8 +8,8 @@ class Steam {
 public:
 	struct AppData {
 		int appId{};
-		std::string name;
-		std::string installDir;
+		std::wstring name;
+		std::wstring installDir;
 	};
 
 	Steam()
@@ -19,7 +19,7 @@ public:
 	{
 		for (const auto& lib : libraryPaths)
 		{
-			std::vector<std::string> appManifests = LocateAppManifestPaths(lib);
+			std::vector<std::wstring> appManifests = LocateAppManifestPaths(lib);
 			appManifestPaths.insert(appManifestPaths.end(), appManifests.begin(), appManifests.end());
 		}
 
@@ -29,23 +29,23 @@ public:
 		}
 	}
 
-	std::string getSteamPath() const { return steamPath; }
-	std::string getLibraryVDF() const { return vdfPath; }
-	std::vector<std::string> getLibraryPaths() const { return libraryPaths; }
-	std::vector<std::string> getAppManifestPaths() const { return appManifestPaths; }
+	std::wstring getSteamPath() const { return steamPath; }
+	std::wstring getLibraryVDF() const { return vdfPath; }
+	std::vector<std::wstring> getLibraryPaths() const { return libraryPaths; }
+	std::vector<std::wstring> getAppManifestPaths() const { return appManifestPaths; }
 	std::vector<AppData> getAppsData() const { return apps; }
 private:
-	std::string steamPath;
-	std::string vdfPath;
-	std::vector<std::string> libraryPaths;
-	std::vector<std::string> appManifestPaths;
+	std::wstring steamPath;
+	std::wstring vdfPath;
+	std::vector<std::wstring> libraryPaths;
+	std::vector<std::wstring> appManifestPaths;
 	std::vector<AppData> apps;
 
-	static std::string LocateSteamPath();
-	static std::string LocateLibraryVDF(const std::string& steamPath);
-	static std::vector<std::string> LocateLibraryPaths(const std::string& vdfPath);
-	static std::vector<std::string> LocateAppManifestPaths(const std::string& libraryPath);
-	static AppData ParseAppManifest(const std::string& appManifestPath);
+	static std::wstring LocateSteamPath();
+	static std::wstring LocateLibraryVDF(const std::wstring& steamPath);
+	static std::vector<std::wstring> LocateLibraryPaths(const std::wstring& vdfPath);
+	static std::vector<std::wstring> LocateAppManifestPaths(const std::wstring& libraryPath);
+	static AppData ParseAppManifest(const std::wstring& appManifestPath);
 };
 
 #endif

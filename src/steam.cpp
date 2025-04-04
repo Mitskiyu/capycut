@@ -1,26 +1,29 @@
 #include <filesystem>
 #include <fstream>
+#include <iosfwd>
 #include <iostream>
 #include <regex>
 #include <string>
 #include <vector>
 
 #include <windows.h>
+#include <winnls.h>
+#include <winreg.h>
 
 #include "steam.hpp"
 
-std::string Steam::LocateSteamPath()
+std::wstring Steam::LocateSteamPath()
 {
 	// ask user for path on error
 	auto LocateSteamPathManual = []()
 		{
-			std::cout << "Manually input the Steam installation path: " << '\n';
-			std::string steamPath;
-			std::getline(std::cin, steamPath);
+			std::wcout << L"Manually input the Steam installation path: " << L'\n';
+			std::wstring steamPath;
+			std::getline(std::wcin, steamPath);
 
 			if (!std::filesystem::exists(steamPath))
 			{
-				return std::string("");
+				return std::wstring{};
 			}
 
 			return steamPath;
@@ -34,7 +37,7 @@ std::string Steam::LocateSteamPath()
 	LONG result = RegOpenKeyExA(HKEY_LOCAL_MACHINE, subKey, 0, KEY_READ, &hKey);
 	if (result != ERROR_SUCCESS)
 	{
-		std::cerr << "ERROR: Could not open registry key: " << result << '\n';
+		std::wcerr << L"ERROR: Could not open registry key: " << result << L'\n';
 		return LocateSteamPathManual();
 	}
 
@@ -46,47 +49,52 @@ std::string Steam::LocateSteamPath()
 	RegCloseKey(hKey);
 	if (result != ERROR_SUCCESS)
 	{
-		std::cerr << "ERROR: Could not read install path: " << result << '\n';
+		std::wcerr << L"ERROR: Could not read install path: " << result << L'\n';
 		return LocateSteamPathManual();
 	}
 
-
-	return std::string(steamPath);
+	// conv char arr to wstring
+	std::wstring wsteamPath;
+	int convSize = MultiByteToWideChar(CP_ACP, 0, steamPath, -1, NULL, 0);
+	// account for null terminator
+	wsteamPath.resize(convSize - 1);
+	MultiByteToWideChar(CP_ACP, 0, steamPath, -1, &wsteamPath[0], convSize);
+	return wsteamPath;
 }
 
-std::string Steam::LocateLibraryVDF(const std::string& steamPath)
+std::wstring Steam::LocateLibraryVDF(const std::wstring& steamPath)
 {
 	// construct libraryfolders.vdf path
 	std::filesystem::path vdfPath = std::filesystem::path(steamPath) / "steamapps" / "libraryfolders.vdf";
 	if (!std::filesystem::exists(vdfPath))
 	{
-		std::cerr << "ERROR: Could not find libraryfolders.vdf" << '\n';
-		std::cout << "Manually input the path to libraryfolders.vdf: " << '\n';
-		std::string manualPath;
-		std::getline(std::cin, manualPath);
+		std::wcerr << L"ERROR: Could not find libraryfolders.vdf" << L'\n';
+		std::wcout << L"Manually input the path to libraryfolders.vdf: " << L'\n';
+		std::wstring manualPath;
+		std::getline(std::wcin, manualPath);
 
 		vdfPath = std::filesystem::path(manualPath);
 		if (!std::filesystem::exists(vdfPath))
 		{
-			return std::string("");
+			return std::wstring{};
 		}
 	}
 
-	return vdfPath.string();
+	return vdfPath.wstring();
 }
 
-std::vector<std::string> Steam::LocateLibraryPaths(const std::string& vdfPath) {
-	std::vector<std::string> libraryPaths;
-	std::ifstream file(vdfPath);
+std::vector<std::wstring> Steam::LocateLibraryPaths(const std::wstring& vdfPath) {
+	std::vector<std::wstring> libraryPaths;
+	std::wifstream file(vdfPath);
 	if (!file.is_open())
 	{
-		std::cerr << "ERROR: Could not open: " << vdfPath << '\n';
+		std::wcerr << L"ERROR: Could not open: " << vdfPath << L'\n';
 		return libraryPaths;
 	}
 
-	std::regex path(R"x("path"\s+"([^"]+)")x");
-	std::string line;
-	std::smatch match;
+	std::wregex path(LR"x("path"\s+"([^"]+)")x");
+	std::wstring line;
+	std::wsmatch match;
 
 	while (std::getline(file, line))
 	{
@@ -100,18 +108,18 @@ std::vector<std::string> Steam::LocateLibraryPaths(const std::string& vdfPath) {
 	return libraryPaths;
 }
 
-std::vector<std::string> Steam::LocateAppManifestPaths(const std::string& libraryPath)
+std::vector<std::wstring> Steam::LocateAppManifestPaths(const std::wstring& libraryPath)
 {
-	std::vector<std::string> appManifestPaths;
+	std::vector<std::wstring> appManifestPaths;
 
 	// construct steamapps path
 	std::filesystem::path steamappsPath = std::filesystem::path(libraryPath) / "steamapps";
 	if (!std::filesystem::exists(steamappsPath))
 	{
-		std::cerr << "ERROR: Could not find steamapps dir in library: " << libraryPath << '\n';
-		std::cout << "Manually input the 'steamapps' dir path: " << '\n';
-		std::string manualPath;
-		std::getline(std::cin, manualPath);
+		std::wcerr << L"ERROR: Could not find steamapps dir in library: " << libraryPath << L'\n';
+		std::wcout << L"Manually input the 'steamapps' dir path: " << L'\n';
+		std::wstring manualPath;
+		std::getline(std::wcin, manualPath);
 
 		steamappsPath = std::filesystem::path(manualPath);
 		if (!std::filesystem::exists(steamappsPath))
@@ -124,31 +132,31 @@ std::vector<std::string> Steam::LocateAppManifestPaths(const std::string& librar
 		if (entry.is_regular_file())
 		{
 			std::filesystem::path filePath = entry.path();
-			std::string filename = filePath.filename().string();
+			std::wstring filename = filePath.filename().wstring();
 
-			if (filename.find("appmanifest_") == 0 && filePath.extension() == ".acf")
-				appManifestPaths.push_back(filePath.string());
+			if (filename.find(L"appmanifest_") == 0 && filePath.extension() == L".acf")
+				appManifestPaths.push_back(filePath.wstring());
 		}
 	}
 
 	return appManifestPaths;
 }
 
-Steam::AppData Steam::ParseAppManifest(const std::string& appManifestPath)
+Steam::AppData Steam::ParseAppManifest(const std::wstring& appManifestPath)
 {
 	AppData appData;
-	std::fstream file(appManifestPath);
+	std::wifstream file(appManifestPath);
 	if (!file.is_open())
 	{
-		std::cerr << "ERROR: Could not open: " << appManifestPath << '\n';
+		std::wcerr << L"ERROR: Could not open: " << appManifestPath << L'\n';
 		return appData;
 	}
 
-	std::regex appId(R"x("appid"\s+"(\d+)")x");
-	std::regex name(R"x("name"\s+"([^"]+)")x");
-	std::regex installDir(R"x("installdir"\s+"([^"]+)")x");
-	std::string line;
-	std::smatch match;
+	std::wregex appId(LR"x("appid"\s+"(\d+)")x");
+	std::wregex name(LR"x("name"\s+"([^"]+)")x");
+	std::wregex installDir(LR"x("installdir"\s+"([^"]+)")x");
+	std::wstring line;
+	std::wsmatch match;
 
 	while (std::getline(file, line))
 	{
